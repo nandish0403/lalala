@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureWave Command Center</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #0a0a0a;
+            color: #00ff88;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background grid */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(0,255,136,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,136,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: float 15s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ff88, #00ccff, #ff0080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0,255,136,0.5);
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { filter: brightness(1) drop-shadow(0 0 10px #00ff88); }
+            100% { filter: brightness(1.2) drop-shadow(0 0 20px #00ff88); }
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border: 2px solid #00ff88;
+            border-radius: 25px;
+            background: rgba(0,255,136,0.1);
+            backdrop-filter: blur(10px);
+            animation: statusGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes statusGlow {
+            0% { box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+            100% { box-shadow: 0 0 25px rgba(0,255,136,0.8); }
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: blink 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Main dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Floor plan section */
+        .floor-plan {
+            background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,204,255,0.1));
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(15px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .floor-map {
+            width: 100%;
+            height: 400px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #00ccff;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room {
+            position: absolute;
+            border: 2px solid #00ff88;
+            background: rgba(0,255,136,0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .room:hover {
+            background: rgba(0,255,136,0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0,255,136,0.6);
+        }
+
+        .threat-dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #ff0040;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            animation: threatPulse 1s ease-in-out infinite;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        @keyframes threatPulse {
+            0% { transform: scale(1); box-shadow: 0 0 10px #ff0040; }
+            50% { transform: scale(1.3); box-shadow: 0 0 25px #ff0040; }
+            100% { transform: scale(1); box-shadow: 0 0 10px #ff0040; }
+        }
+
+        .radar-sweep {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, transparent, rgba(0,255,136,0.3), transparent);
+            animation: radarSpin 4s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes radarSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Control panel */
+        .control-panel {
+            background: linear-gradient(135deg, rgba(255,0,128,0.1), rgba(0,255,136,0.1));
+            border: 2px solid #ff0080;
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        .auth-section {
+            margin-bottom: 30px;
+        }
+
+        .auth-methods {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .auth-method {
+            flex: 1;
+            min-width: 100px;
+            padding: 20px;
+            border: 2px solid #00ccff;
+            border-radius: 15px;
+            background: rgba(0,204,255,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-method:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,204,255,0.4);
+            border-color: #00ff88;
+        }
+
+        .auth-method.active {
+            background: rgba(0,255,136,0.3);
+            border-color: #00ff88;
+            animation: authActive 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes authActive {
+            0% { box-shadow: 0 0 20px rgba(0,255,136,0.5); }
+            100% { box-shadow: 0 0 35px rgba(0,255,136,0.8); }
+        }
+
+        .auth-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .system-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .control-btn {
+            padding: 20px;
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            background: linear-gradient(45deg, rgba(0,255,136,0.1), rgba(0,204,255,0.1));
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0,255,136,0.6);
+            background: linear-gradient(45deg, rgba(0,255,136,0.3), rgba(0,204,255,0.3));
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -100%;
+            width: 100%;
+            height: calc(100% + 4px);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .control-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Bottom panels */
+        .bottom-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .bottom-panels {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,0,0,0.8));
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .threat-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .threat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,0,64,0.2);
+            border-left: 4px solid #ff0040;
+            border-radius: 5px;
+            animation: threatAlert 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes threatAlert {
+            0% { background: rgba(255,0,64,0.2); }
+            100% { background: rgba(255,0,64,0.4); }
+        }
+
+        .battery-indicator {
+            width: 100%;
+            height: 30px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battery-level {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border-radius: 13px;
+            transition: width 1s ease;
+            position: relative;
+            animation: batteryGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes batteryGlow {
+            0% { box-shadow: inset 0 0 10px rgba(0,255,136,0.5); }
+            100% { box-shadow: inset 0 0 20px rgba(0,255,136,0.8); }
+        }
+
+        .system-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 15px;
+            background: rgba(0,204,255,0.1);
+            border: 1px solid #00ccff;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(0,204,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00ccff;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00ff88, #00ccff);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #00ccff, #ff0080);
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">SECUREWAVE</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>MMWAVE ACTIVE</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>OFFLINE MODE</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>SECURE CONNECTION</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard">
+            <!-- Floor Plan Section -->
+            <div class="floor-plan">
+                <h2 class="section-title">🛡️ Threat Visualization</h2>
+                <div class="floor-map" id="floorMap">
+                    <div class="radar-sweep"></div>
+                    <!-- Rooms -->
+                    <div class="room" style="top: 10%; left: 10%; width: 35%; height: 30%;">LOBBY</div>
+                    <div class="room" style="top: 10%; left: 55%; width: 35%; height: 30%;">OFFICE A</div>
+                    <div class="room" style="top: 50%; left: 10%; width: 25%; height: 40%;">SERVER ROOM</div>
+                    <div class="room" style="top: 50%; left: 45%; width: 45%; height: 40%;">CONFERENCE</div>
+                    
+                    <!-- Threat indicators -->
+                    <div class="threat-dot" style="top: 25%; left: 25%;" title="Motion Detected: Lobby"></div>
+                    <div class="threat-dot" style="top: 70%; left: 60%;" title="Presence Detected: Conference Room"></div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">🔐 Multifactor Control</h2>
+                <div class="auth-section">
+                    <div class="auth-methods">
+                        <div class="auth-method active" onclick="toggleAuth(this)">
+                            <span class="auth-icon">🔑</span>
+                            <div>PHYSICAL KEY</div>
+                        </div>
+                        <div class="auth-method" onclick="toggleAuth(this)">
+                            <span class="auth-icon">📡</span>
+                            <div>RFID CARD</div>
+                        </div>
+                        <div class="auth-method" onclick="toggleAuth(this)">
+                            <span class="auth-icon">👆</span>
+                            <div>FINGERPRINT</div>
+                        </div>
+                    </div>
+                    <div class="system-controls">
+                        <button class="control-btn" onclick="systemAction('arm')">🛡️ ARM SYSTEM</button>
+                        <button class="control-btn" onclick="systemAction('disarm')">🔓 DISARM</button>
+                        <button class="control-btn" onclick="systemAction('lockdown')">🚨 LOCKDOWN</button>
+                        <button class="control-btn" onclick="systemAction('reset')">🔄 RESET</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panels -->
+        <div class="bottom-panels">
+            <!-- Threat Alerts -->
+            <div class="panel">
+                <h3 class="section-title">⚠️ Active Threats</h3>
+                <div class="threat-list" id="threatList">
+                    <div class="threat-item">
+                        <span>LOBBY - Motion</span>
+                        <span style="color: #ff0040;">HIGH</span>
+                    </div>
+                    <div class="threat-item">
+                        <span>CONFERENCE - Presence</span>
+                        <span style="color: #ffaa00;">MEDIUM</span>
+                    </div>
+                    <div class="threat-item">
+                        <span>PERIMETER - Clear</span>
+                        <span style="color: #00ff88;">SAFE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="panel">
+                <h3 class="section-title">🔋 System Status</h3>
+                <div style="margin-bottom: 20px;">
+                    <div style="margin-bottom: 10px;">Battery Level: 85%</div>
+                    <div class="battery-indicator">
+                        <div class="battery-level" style="width: 85%;"></div>
+                    </div>
+                </div>
+                <div class="system-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="sensorsActive">12</div>
+                        <div class="stat-label">Sensors Active</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="uptime">72h</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Status -->
+            <div class="panel">
+                <h3 class="section-title">📡 Network</h3>
+                <div class="system-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #ff0040;">OFFLINE</div>
+                        <div class="stat-label">Internet</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #00ff88;">ACTIVE</div>
+                        <div class="stat-label">Local Mesh</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #00ff88;">READY</div>
+                        <div class="stat-label">Backup Power</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #00ccff;">SECURE</div>
+                        <div class="stat-label">Failover</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Toggle authentication methods
+        function toggleAuth(element) {
+            document.querySelectorAll('.auth-method').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // System actions
+        function systemAction(action) {
+            const actions = {
+                'arm': 'System Armed - Full Security Active',
+                'disarm': 'System Disarmed - Monitoring Only',
+                'lockdown': 'LOCKDOWN INITIATED - All Access Denied',
+                'reset': 'System Reset Complete - All Clear'
+            };
+            
+            // Create notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(45deg, #00ff88, #00ccff);
+                color: #000;
+                padding: 20px 40px;
+                border-radius: 15px;
+                font-weight: bold;
+                font-size: 1.2rem;
+                z-index: 1000;
+                animation: notification 3s ease forwards;
+                box-shadow: 0 0 50px rgba(0,255,136,0.8);
+            `;
+            notification.textContent = actions[action];
+            document.body.appendChild(notification);
+            
+            // Add animation keyframes if not exists
+            if (!document.querySelector('#notification-style')) {
+                const style = document.createElement('style');
+                style.id = 'notification-style';
+                style.textContent = `
+                    @keyframes notification {
+                        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                        20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+                        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        // Simulate real-time data updates
+        function updateStats() {
+            const sensorsActive = document.getElementById('sensorsActive');
+            const uptime = document.getElementById('uptime');
+            
+            setInterval(() => {
+                sensorsActive.textContent = Math.floor(Math.random() * 3) + 10;
+            }, 5000);
+            
+            let hours = 72;
+            setInterval(() => {
+                hours += Math.random() < 0.5 ? 0 : 1;
+                uptime.textContent = hours + 'h';
+            }, 60000);
+        }
+
+        // Add random threat movements
+        function animateThreats() {
+            const threats = document.querySelectorAll('.threat-dot');
+            threats.forEach(threat => {
+                setInterval(() => {
+                    const currentTop = parseInt(threat.style.top);
+                    const currentLeft = parseInt(threat.style.left);
+                    const newTop = Math.max(10, Math.min(80, currentTop + (Math.random() - 0.5) * 10));
+                    const newLeft = Math.max(10, Math.min(80, currentLeft + (Math.random() - 0.5) * 10));
+                    
+                    threat.style.transition = 'all 2s ease';
+                    threat.style.top = newTop + '%';
+                    threat.style.left = newLeft + '%';
+                }, 8000);
+            });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            updateStats();
+            animateThreats();
+        });
+
+        // Add click effects to rooms
+        document.querySelectorAll('.room').forEach(room => {
+            room.addEventListener('click', function() {
+                this.style.animation = 'none';
+                this.offsetHeight; // Trigger reflow
+                this.style.animation = 'roomClick 0.5s ease';
+            });
+        });
+
+        // Add room click animation
+        const roomClickStyle = document.createElement('style');
+        roomClickStyle.textContent = `
+            @keyframes roomClick {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(0,255,136,0.8); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(roomClickStyle);
+    </script>
+</body>
+</html>
